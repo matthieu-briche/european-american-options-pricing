@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "numprob-options"
+version = "0.1.0"
+description = "Pricing et Grecques d'options (Monte Carlo, QMC, LSM) optimisés CPU"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "scipy>=1.10", "numba>=0.58"]
+
+[project.optional-dependencies]
+test = ["pytest>=7", "pytest-cov", "hypothesis"]
+
+[tool.setuptools]
+py-modules = ["pricer", "greeks", "dividendes"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
+markers = [
+    "slow: tests Monte Carlo lourds (désactiver avec -m 'not slow')",
+]
+filterwarnings = ["error::RuntimeWarning"]

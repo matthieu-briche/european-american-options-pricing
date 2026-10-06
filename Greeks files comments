@@ -1,0 +1,29 @@
+Il y en avait bien 5, Delta, Gamma, Véga, Rho et Thêta, mais pas pour toutes les options. Après vérification, deux fonctions étaient incomplètes :
+
+l'asiatique n'avait pas de Thêta (4 sensibilités) ;
+mc_greeks_pathwise, la toute première démonstration dans pricer.py, n'avait que Delta et Véga.
+
+C'est corrigé : chaque fonction renvoie maintenant exactement les 5 sensibilités, plus le prix.
+
+Fonction	Option	Sensibilités
+bs_greeks	européenne, formule exacte	5
+mc_european_greeks	européenne, Monte Carlo	5
+mc_greeks_pathwise	européenne, Monte Carlo simple	5 (avant : 2)
+mc_asian_greeks	asiatique	5 (avant : 4)
+crr_american	américaine, arbre binomial	5
+fd_greeks_crn + LSM	américaine, Monte Carlo	5
+market_units	conversion à vos conventions	5
+
+Le Thêta de l'asiatique est calculé dans la même simulation que les autres Grecques, avec la même variable de contrôle :
+
+	Monte Carlo ± IC95	Référence
+Thêta (par an)	−3,4498 ± 0,0007	−3,4505
+Thêta (par jour, avec market_units)	−0,00945 €	
+
+On y suppose, comme dans les différences finies, que les dates de constatation restent régulièrement réparties jusqu'à l'échéance.
+
+Trois nouveaux tests, soit 128 au total :
+
+l'un vérifie que chacune des 7 fonctions renvoie bien les 5 sensibilités, pour que ce manque ne puisse pas revenir ;
+un autre vérifie le Thêta de l'asiatique trajectoire par trajectoire ;
+le dernier compare les 5 Grecques de mc_greeks_pathwise aux formules exactes, pour le call et le put.

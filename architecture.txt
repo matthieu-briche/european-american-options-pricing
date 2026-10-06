@@ -1,0 +1,15 @@
+options_pricing\
+├── __pycache__\
+├── .vscode\settings.json
+├── pricer.py          ← prix (Black–Scholes, MC, QMC, asiatique, américaine)
+├── greeks.py          ← Grecques
+├── bench.py           ← benchmark des prix
+├── bench_greeks.py    ← benchmark des Grecques
+├── pyproject.toml
+├── README.md
+└── tests\
+    ├── __pycache__\
+    ├── conftest.py
+    ├── test_closed_form.py
+    ├── test_greeks_mc.py
+    └── test_monte_carlo.py

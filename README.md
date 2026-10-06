@@ -60,8 +60,8 @@ Le principe qui fait gagner du CPU : une seule simulation donne le prix et toute
 Les méthodes, selon l'option (chapitres 2.2 et 10 du livre)
 Grecque	Méthode utilisée	Pourquoi
 Delta, Vega, Rho, Theta	Pathwise : on dérive le payoff le long de chaque trajectoire	Variance très faible
-Gamma	Mixte pathwise + rapport de vraisemblance : un poids Z/(σ√T) − 1 est appliqué au Delta pathwise	Le Delta d'un call est discontinu, on ne peut pas le dériver une seconde fois
-Asiatique	Les mêmes estimateurs, calculés dans un noyau Numba parallèle (10 estimateurs par trajectoire, en un seul passage), plus une variable de contrôle géométrique sur chaque Grecque	Les Grecques exactes de l'asiatique géométrique se déduisent de sa formule fermée
+Gamma	Mixte pathwise + rapport de vraisemblance : un poids Z/(σ√T) − 1 est appliqué au Delta pathwise	Le Delta d'un call est discontinu, 
+on ne peut pas le dériver une seconde fois Asiatique	Les mêmes estimateurs, calculés dans un noyau Numba parallèle (10 estimateurs par trajectoire, en un seul passage), plus une variable de contrôle géométrique sur chaque Grecque	Les Grecques exactes de l'asiatique géométrique se déduisent de sa formule fermée
 Américaine (LSM)	Différences finies avec nombres aléatoires communs : la même graine (seed) pour le prix de base et pour les prix décalés	Méthode universelle, car la frontière d'exercice empêche un estimateur pathwise simple
 Référence pour l'américaine	Arbre binomial CRR vectorisé, 2000 pas	Valeur déterministe pour valider
 Résultats obtenus (S=K=100, r=5 %, σ=20 %, T=1)
@@ -120,40 +120,41 @@ Ce qui est testé
 
 test_closed_form.py, les formules exactes :
 
-valeurs de référence (Hull) et refus des paramètres invalides ;
-parité call-put ;
-calcul sur un tableau de strikes identique au calcul strike par strike ;
-cas limites (strike nul, maturité nulle) ;
-chaque Grecque fermée comparée à une dérivée numérique, pour le call et le put, sur 4 couples (K, T) ;
-relations de parité entre les Grecques ;
-avec Hypothesis, qui génère des centaines de paramètres au hasard : bornes de non-arbitrage, 
+-valeurs de référence (Hull) et refus des paramètres invalides ;
+-parité call-put ;
+-calcul sur un tableau de strikes identique au calcul strike par strike ;
+-cas limites (strike nul, maturité nulle) ;
+-chaque Grecque fermée comparée à une dérivée numérique, pour le call et le put, sur 4 couples (K, T) ;
+-relations de parité entre les Grecques ;
+-avec Hypothesis, qui génère des centaines de paramètres au hasard : bornes de non-arbitrage, 
 équation aux dérivées partielles de Black–Scholes (Θ + ½σ²S²Γ + (r−q)SΔ − rV = 0), signes et monotonie ;
-l'asiatique géométrique avec une seule date redonne Black–Scholes, et sa parité est vérifiée.
+-l'asiatique géométrique avec une seule date redonne Black–Scholes, et sa parité est vérifiée.
 
 test_monte_carlo.py, les prix Monte Carlo :
 
-le résultat est sans biais pour les 4 combinaisons « antithétique / variable de contrôle » ;
-chaque technique réduit bien la variance ;
-l'erreur standard décroît en 1/√N ;
-l'intervalle de confiance à 95 % contient le vrai prix environ 95 fois sur 100 tirages ;
-même graine, même résultat ; graine différente, résultat différent ;
-le noyau Numba de l'asiatique est comparé à une version NumPy simple, et l'inégalité arithmético-géométrique 
+-le résultat est sans biais pour les 4 combinaisons « antithétique / variable de contrôle » ;
+-chaque technique réduit bien la variance ;
+-l'erreur standard décroît en 1/√N ;
+-l'intervalle de confiance à 95 % contient le vrai prix environ 95 fois sur 100 tirages ;
+-même graine, même résultat ; graine différente, résultat différent ;
+-le noyau Numba de l'asiatique est comparé à une version NumPy simple, et l'inégalité arithmético-géométrique 
 (moyenne arithmétique ≥ moyenne géométrique) est vérifiée sur chaque trajectoire ;
-LSM est comparé à l'arbre binomial, et un put très dans la monnaie vaut sa valeur intrinsèque.
+-LSM est comparé à l'arbre binomial, et un put très dans la monnaie vaut sa valeur intrinsèque.
 
 test_greeks_mc.py, les Grecques :
 
-les 6 Grecques Monte Carlo européennes sont comparées aux formules fermées, sur 4 cas ;
-sur chaque trajectoire, le Delta et le Vega pathwise du noyau sont comparés à une dérivée numérique ;
-les estimateurs géométriques servant de variable de contrôle sont sans biais ;
-les différences finies sur un pricer exact retrouvent les formules fermées ;
-l'utilisation de la même graine dans les différences finies est indispensable : elle rend l'erreur sur le Gamma au moins 10 fois plus petite ;
-l'arbre binomial converge, et un call américain sans dividende vaut l'européen ;
-les Grecques LSM sont comparées à celles de l'arbre.
-Choix de conception
-Toutes les graines sont fixes, donc les tests donnent toujours le même résultat, y compris en intégration continue. 
+-les 6 Grecques Monte Carlo européennes sont comparées aux formules fermées, sur 4 cas ;
+-sur chaque trajectoire, le Delta et le Vega pathwise du noyau sont comparés à une dérivée numérique ;
+-les estimateurs géométriques servant de variable de contrôle sont sans biais ;
+-les différences finies sur un pricer exact retrouvent les formules fermées ;
+-l'utilisation de la même graine dans les différences finies est indispensable : elle rend l'erreur sur le Gamma au moins 10 fois plus petite ;
+-l'arbre binomial converge, et un call américain sans dividende vaut l'européen ;
+-les Grecques LSM sont comparées à celles de l'arbre.
+
+Choix de conception :
+-Toutes les graines sont fixes, donc les tests donnent toujours le même résultat, y compris en intégration continue. 
 Un estimateur Monte Carlo est accepté si l'écart à la référence est inférieur à 4 erreurs standard.
-Deux défauts trouvés en écrivant les tests, tous deux dans les tests eux-mêmes et pas dans le pricer :
+-Deux défauts trouvés en écrivant les tests, tous deux dans les tests eux-mêmes et pas dans le pricer :
 Avec une seule date, la variable de contrôle de l'asiatique est parfaite : l'erreur standard vaut 0 et l'estimateur donne le prix exact. Le test vérifie maintenant cette propriété.
 Hypothesis a trouvé un cas très dans la monnaie où deux prix ne diffèrent que d'un arrondi machine (1e-14). Le test de monotonie accepte maintenant cet arrondi.
 Les deux tests lourds (les Grecques par différences finies sur LSM et sur l'asiatique) sont marqués slow, pour pouvoir les sauter pendant le développement.

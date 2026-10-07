@@ -1,4 +1,28 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Cache de compilation Numba (propre à chaque machine)
+*.nbi
+*.nbc
+
+# Tests et couverture
 .pytest_cache/
+.hypothesis/
+.coverage
+htmlcov/
+
+# Environnements virtuels
 .venv/
+venv/
+env/
+
+# Éditeurs et systèmes
+.vscode/*
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db

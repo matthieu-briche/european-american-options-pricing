@@ -60,6 +60,25 @@ class BlackScholes:
             raise ValueError("s0 et sigma doivent être > 0")
 
 
+def check_proba_crr(p: float, m: BlackScholes, dt: float) -> None:
+    """
+    Arbre CRR : la probabilité risque-neutre doit être dans ]0, 1[, sinon l'arbre
+    produit des prix sans signification (arbitrage dans l'arbre). Avec u = e^{σ√dt},
+    c'est équivalent (exactement) à  σ > |r - q| · √dt.
+    """
+    if not 0.0 < p < 1.0:
+        raise ValueError(
+            f"Arbre CRR : probabilité p={p:.4f} hors de ]0, 1[ "
+            f"(sigma={m.sigma}, r-q={m.r - m.q:+.4f}, dt={dt:.2e}). "
+            f"Il faut sigma > |r-q|·√dt = {abs(m.r - m.q) * math.sqrt(dt):.4g} : "
+            "augmenter n ou vérifier les paramètres.")
+
+
+def sigma_min_crr(r: float, q: float, T: float, n: int) -> float:
+    """Plus petite volatilité acceptée par un arbre CRR à n pas (voir check_proba_crr)."""
+    return abs(r - q) * math.sqrt(T / n)
+
+
 @dataclass(frozen=True, slots=True)
 class MCResult:
     price: float

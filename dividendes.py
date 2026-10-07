@@ -20,13 +20,14 @@ Le taux continu q du modèle reste utilisable (repo / coût d'emprunt).
 from __future__ import annotations
 
 import math
+import warnings
 from dataclasses import replace
 from typing import Literal, Sequence
 
 import numpy as np
 from scipy.interpolate import CubicSpline, PchipInterpolator
 
-from pricer import BlackScholes
+from pricer import BlackScholes, check_proba_crr
 
 OptionType = Literal["call", "put"]
 DivModel = Literal["spot", "escrowed"]
@@ -40,6 +41,7 @@ def _tree_value(m: BlackScholes, K: float, T: float, kind: OptionType,
     u = math.exp(m.sigma * math.sqrt(dt))
     d = 1.0 / u
     p = (math.exp((m.r - m.q) * dt) - d) / (u - d)
+    check_proba_crr(p, m, dt)
     disc = math.exp(-m.r * dt)
     sgn = 1.0 if kind == "call" else -1.0
 
@@ -88,6 +90,7 @@ def _tree_spot(m, K, T, kind, dividends, n):
     u = math.exp(m.sigma * math.sqrt(dt))
     d = 1.0 / u
     p = (math.exp((m.r - m.q) * dt) - d) / (u - d)
+    check_proba_crr(p, m, dt)
     disc = math.exp(-m.r * dt)
     sgn = 1.0 if kind == "call" else -1.0
     div_at = {}
@@ -153,6 +156,14 @@ def crr_american_div(m: BlackScholes, K: float, T: float, kind: OptionType = "pu
     (ex. 5 % du cours sous un mois), le rho garde un biais de discrétisation en
     O(1/n) d'environ 2 % ; augmentez n, ou extrapolez : rho ≈ 2·rho(2n) - rho(n).
     """
+    dt0 = T / n
+    precoces = [t for t, D in dividends if 0 < t <= T and D > 0 and round(t / dt0) <= 2]
+    if precoces:
+        warnings.warn(
+            f"Détachement dans les deux premiers pas de l'arbre (t={min(precoces):.2e} an, "
+            f"dt={dt0:.2e}) : delta, gamma et theta lus sur les premiers nœuds sont "
+            "faussés. Augmentez n ou traitez le dividende séparément.",
+            UserWarning, stacklevel=2)
     price = lambda mm: _tree(mm, K, T, kind, dividends, n, model)[0][0][1][0]
     k, dt = _tree(m, K, T, kind, dividends, n, model)
     (s1, v1), (s2, v2), (_, v0) = k[1], k[2], k[0]

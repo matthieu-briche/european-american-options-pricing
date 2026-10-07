@@ -41,9 +41,7 @@ chaine_test.csv
 dividendes_test.csv
 
 # --- Éditeurs ------------------------------------------------------------- #
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
+.vscode/
 .idea/
 
 # --- Systèmes d'exploitation ---------------------------------------------- #

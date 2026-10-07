@@ -1,28 +1,56 @@
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-build/
-dist/
+# =========================================================================== #
+# options_pricing — fichiers à ne pas versionner
+# =========================================================================== #
 
-# Cache de compilation Numba (propre à chaque machine) 
-*.nbi
-*.nbc
-
-# Tests et couverture
-.pytest_cache/
-.hypothesis/
-.coverage
-htmlcov/
-
-# Environnements virtuels
+# --- Environnement virtuel ------------------------------------------------- #
 .venv/
 venv/
 env/
 
-# Éditeurs et systèmes
+# --- Python : bytecode et caches ------------------------------------------- #
+__pycache__/
+*.py[cod]
+# Cache Numba (cache=True) : fichiers .nbi / .nbc, normalement dans __pycache__
+*.nbi
+*.nbc
+
+# --- Installation du paquet (pip install -e .) ----------------------------- #
+*.egg-info/
+build/
+dist/
+
+# --- Tests ----------------------------------------------------------------- #
+.pytest_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# --- Sorties générées par les scripts (régénérables) ----------------------- #
+# valider_pricer.py, valider_lsm.py, valider_dividendes.py
+rapport_*.csv
+# valider_marche.py
+resultats_marche_*.csv
+svi_params_*.csv
+smiles_*.png
+chaine_*.csv
+dividendes_*.csv
+# generer_chaine_test.py
+chaine_test.csv
+dividendes_test.csv
+
+# --- Éditeurs ------------------------------------------------------------- #
 .vscode/*
 !.vscode/settings.json
+!.vscode/extensions.json
 .idea/
-.DS_Store
+
+# --- Systèmes d'exploitation ---------------------------------------------- #
 Thumbs.db
+desktop.ini
+.DS_Store
+
+# --- Secrets (clés d'API, identifiants de courtier) ------------------------ #
+.env
+.env.*

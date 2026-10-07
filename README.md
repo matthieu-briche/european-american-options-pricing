@@ -41,7 +41,7 @@ Techniques in Derivatives Hedging* (Springer, 2016).
 |---|---|
 | Call européen, quasi-Monte Carlo | 10,45055 ± 0,00006 pour une valeur exacte de 10,45058 |
 | Prix + 5 Grecques en **une seule** simulation | 2 M de trajectoires, écart à la formule exacte < 0,1 % |
-| Chaîne d'options synthétique pricée par QuantLib | **100 %** des options repricées dans la fourchette bid-ask |
+| Chaîne d'options AAPL réelle, pricer américain + smile SVI | **94,3 %** des options repricées dans la fourchette bid-ask |
 | Couverture, vol réalisée inconnue entre 15 % et 25 % | écart-type du P&L divisé par 8 (17 % → 2 % de la prime) avec une couverture gamma-neutre |
 | Suite de tests | 233 tests pytest, dont des tests de propriétés avec Hypothesis |
 
@@ -120,8 +120,10 @@ la fourchette bid-ask.
   290 jours : **100 %** des 322 options retenues repricées dans la fourchette, écart
   médian smile − marché de 0,04 point de vol, coût d'emprunt retrouvé (0,30 % visé,
   0,21 % à 0,39 % calé selon l'échéance), aucun arbitrage papillon ni calendaire.
-- **Chaîne AAPL réelle** (Yahoo Finance, 6 octobre 2026) : environ 89 % des options
-  repricées dans la fourchette.
+- **Chaîne AAPL réelle** (Yahoo Finance, données différées, 7 octobre 2026 en séance) :
+  **94,3 %** des 350 options retenues repricées dans la fourchette, sur 6 échéances de
+  7 jours à 14 mois ; écart médian smile − marché de 0,15 point de vol, écart médian
+  de vol call/put au même strike de 0,94 point, aucun arbitrage papillon ni calendaire.
 
 ![Smiles de volatilité implicite AAPL](docs/smiles_AAPL.png)
 

@@ -1,0 +1,123 @@
+--- a/pricer.py
++++ b/pricer.py
+@@ -60,6 +60,25 @@
+             raise ValueError("s0 et sigma doivent être > 0")
+ 
+ 
++def check_proba_crr(p: float, m: BlackScholes, dt: float) -> None:
++    """
++    Arbre CRR : la probabilité risque-neutre doit être dans ]0, 1[, sinon l'arbre
++    produit des prix sans signification (arbitrage dans l'arbre). Avec u = e^{σ√dt},
++    c'est équivalent (exactement) à  σ > |r - q| · √dt.
++    """
++    if not 0.0 < p < 1.0:
++        raise ValueError(
++            f"Arbre CRR : probabilité p={p:.4f} hors de ]0, 1[ "
++            f"(sigma={m.sigma}, r-q={m.r - m.q:+.4f}, dt={dt:.2e}). "
++            f"Il faut sigma > |r-q|·√dt = {abs(m.r - m.q) * math.sqrt(dt):.4g} : "
++            "augmenter n ou vérifier les paramètres.")
++
++
++def sigma_min_crr(r: float, q: float, T: float, n: int) -> float:
++    """Plus petite volatilité acceptée par un arbre CRR à n pas (voir check_proba_crr)."""
++    return abs(r - q) * math.sqrt(T / n)
++
++
+ @dataclass(frozen=True, slots=True)
+ class MCResult:
+     price: float
+--- a/greeks.py
++++ b/greeks.py
+@@ -43,7 +43,7 @@
+ from scipy.special import ndtr
+ 
+ from pricer import (BlackScholes, MCResult, OptionType, _RunningStats,
+-                    geometric_asian_price)
++                    check_proba_crr, geometric_asian_price)
+ 
+ GREEKS = ("price", "delta", "gamma", "vega", "rho", "theta")
+ _INV_SQRT_2PI = 1.0 / math.sqrt(2.0 * math.pi)
+@@ -261,6 +261,7 @@
+         dt = T / n
+         u = math.exp(mm.sigma * math.sqrt(dt)); d = 1.0 / u
+         p = (math.exp((mm.r - mm.q) * dt) - d) / (u - d)
++        check_proba_crr(p, mm, dt)
+         disc = math.exp(-mm.r * dt)
+         sgn = 1.0 if kind == "call" else -1.0
+         j = np.arange(n + 1)
+--- a/dividendes.py
++++ b/dividendes.py
+@@ -20,13 +20,14 @@
+ from __future__ import annotations
+ 
+ import math
++import warnings
+ from dataclasses import replace
+ from typing import Literal, Sequence
+ 
+ import numpy as np
+ from scipy.interpolate import CubicSpline, PchipInterpolator
+ 
+-from pricer import BlackScholes
++from pricer import BlackScholes, check_proba_crr
+ 
+ OptionType = Literal["call", "put"]
+ DivModel = Literal["spot", "escrowed"]
+@@ -40,6 +41,7 @@
+     u = math.exp(m.sigma * math.sqrt(dt))
+     d = 1.0 / u
+     p = (math.exp((m.r - m.q) * dt) - d) / (u - d)
++    check_proba_crr(p, m, dt)
+     disc = math.exp(-m.r * dt)
+     sgn = 1.0 if kind == "call" else -1.0
+ 
+@@ -88,6 +90,7 @@
+     u = math.exp(m.sigma * math.sqrt(dt))
+     d = 1.0 / u
+     p = (math.exp((m.r - m.q) * dt) - d) / (u - d)
++    check_proba_crr(p, m, dt)
+     disc = math.exp(-m.r * dt)
+     sgn = 1.0 if kind == "call" else -1.0
+     div_at = {}
+@@ -153,6 +156,14 @@
+     (ex. 5 % du cours sous un mois), le rho garde un biais de discrétisation en
+     O(1/n) d'environ 2 % ; augmentez n, ou extrapolez : rho ≈ 2·rho(2n) - rho(n).
+     """
++    dt0 = T / n
++    precoces = [t for t, D in dividends if 0 < t <= T and D > 0 and round(t / dt0) <= 2]
++    if precoces:
++        warnings.warn(
++            f"Détachement dans les deux premiers pas de l'arbre (t={min(precoces):.2e} an, "
++            f"dt={dt0:.2e}) : delta, gamma et theta lus sur les premiers nœuds sont "
++            "faussés. Augmentez n ou traitez le dividende séparément.",
++            UserWarning, stacklevel=2)
+     price = lambda mm: _tree(mm, K, T, kind, dividends, n, model)[0][0][1][0]
+     k, dt = _tree(m, K, T, kind, dividends, n, model)
+     (s1, v1), (s2, v2), (_, v0) = k[1], k[2], k[0]
+--- a/valider_marche.py
++++ b/valider_marche.py
+@@ -43,6 +43,7 @@
+ from scipy.optimize import brentq
+ 
+ from dividendes import prix_americain_div
++from pricer import sigma_min_crr
+ from svi import arbitrage_calendaire, arbitrage_papillon, caler_svi
+ 
+ # Filtres de qualité des cotations
+@@ -129,10 +130,14 @@
+ def vol_implicite(prix, S, K, T, r, q, kind, dv):
+     """None si le prix est hors des bornes du modèle (arbitrage ou donnée sale)."""
+     f = lambda v: prix_americain_div(S, K, T, r, q, v, kind, dv, n=N_PAS) - prix
+-    lo, hi = f(VOL_MIN), f(VOL_MAX)
++    # Borne basse : au-dessous de |r-q|·√dt, la probabilité de l'arbre sort de ]0, 1[
++    v_min = max(VOL_MIN, 1.001 * sigma_min_crr(r, q, T, N_PAS))
++    if v_min >= VOL_MAX:
++        return None
++    lo, hi = f(v_min), f(VOL_MAX)
+     if lo > 0 or hi < 0:
+         return None
+-    return brentq(f, VOL_MIN, VOL_MAX, xtol=1e-5)
++    return brentq(f, v_min, VOL_MAX, xtol=1e-5)
+ 
+ 
+ def caler_borrow(df_e, S, T, r, dv):

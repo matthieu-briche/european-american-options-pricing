@@ -43,7 +43,7 @@ from numba import njit, prange
 from scipy.special import ndtr
 
 from pricer import (BlackScholes, MCResult, OptionType, _RunningStats,
-                    geometric_asian_price)
+                    check_proba_crr, geometric_asian_price)
 
 GREEKS = ("price", "delta", "gamma", "vega", "rho", "theta")
 _INV_SQRT_2PI = 1.0 / math.sqrt(2.0 * math.pi)
@@ -261,6 +261,7 @@ def crr_american(m: BlackScholes, K: float, T: float, kind: OptionType = "put",
         dt = T / n
         u = math.exp(mm.sigma * math.sqrt(dt)); d = 1.0 / u
         p = (math.exp((mm.r - mm.q) * dt) - d) / (u - d)
+        check_proba_crr(p, mm, dt)
         disc = math.exp(-mm.r * dt)
         sgn = 1.0 if kind == "call" else -1.0
         j = np.arange(n + 1)

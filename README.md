@@ -199,8 +199,8 @@ flowchart LR
 Python 3.10 ou plus récent.
 
 ```bash
-git clone https://github.com/matthieu-briche/options-pricing.git
-cd options-pricing
+git clone https://github.com/matthieu-briche/python-options-pricing.git
+cd python-options-pricing
 python -m pip install numpy scipy numba pytest pytest-cov hypothesis
 ```
 

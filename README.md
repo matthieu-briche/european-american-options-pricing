@@ -390,3 +390,9 @@ régénérables et ne sont pas versionnés.
 ## Auteur
 
 Matthieu Briche · [LinkedIn](https://www.linkedin.com/in/matthieu-briche-aa69b441/)
+
+<p align="center">
+  <a href="https://github.com/matthieu-briche">
+    <img src="assets/logo.png" alt="Matthieu Briche" width="37">
+  </a>
+</p>

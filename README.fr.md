@@ -1,3 +1,5 @@
+English version](README.md) · 🇫🇷 Français
+
 # options-pricing
 
 **Pricing, Grecques et couverture d'options en Python, optimisés CPU et validés contre QuantLib et le marché.**
